@@ -1,0 +1,5 @@
+.venv
+.DS_Store
+.log
+.env
+.test_main.http
