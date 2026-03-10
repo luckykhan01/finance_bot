@@ -9,4 +9,9 @@ class TransactionCreate(BaseModel):
     category: str = Field(..., example='Food')
     description: str = Field(default="", example="Eating outside")
 
+class RawTransactionText(BaseModel):
+    user_id: int = Field(..., example=123456789)
+    username: str = Field(..., example='johndoe')
+    text: str = Field(..., example='-5000 Kaspi food')
+
 

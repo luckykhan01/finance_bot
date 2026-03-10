@@ -3,3 +3,4 @@ uvicorn
 asyncpg
 pydantic-settings
 python-dotenv
+google-generativeai

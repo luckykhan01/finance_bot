@@ -19,5 +19,5 @@ ADD_TRANSACTION = """
 """
 
 UPDATE_ACCOUNT_BALANCE = """
-    UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING balance;
+    UPDATE accounts SET balance = COALESCE(balance, 0) + $1 WHERE id = $2 RETURNING balance;
 """
