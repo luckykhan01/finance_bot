@@ -21,3 +21,21 @@ ADD_TRANSACTION = """
 UPDATE_ACCOUNT_BALANCE = """
     UPDATE accounts SET balance = COALESCE(balance, 0) + $1 WHERE id = $2 RETURNING balance;
 """
+
+GET_ALL_BALANCES = """
+    SELECT name, balance, currency
+    FROM accounts
+    WHERE user_id = $1
+    ORDER BY balance DESC;
+"""
+
+GET_MONTHLY_STATS = """
+    SELECT category, SUM(amount) as total
+    FROM transactions 
+    WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $1)
+        AND type = $2
+        AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)
+    GROUP BY category
+    ORDER BY total DESC; 
+"""
+

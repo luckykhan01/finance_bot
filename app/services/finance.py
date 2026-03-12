@@ -33,9 +33,28 @@ async def process_transaction(
 
             balance_change = amount if t_type == 'income' else -amount
 
+            await conn.execute(
+                "UPDATE accounts SET balance = COALESCE(balance, 0) + $1 WHERE id = $2",
+                balance_change,
+                account_id
+            )
+
             new_balance = await conn.fetchval(
-                queries.UPDATE_ACCOUNT_BALANCE,
-                balance_change, user_id
+                "SELECT balance FROM accounts WHERE id = $1",
+                account_id
             )
 
             return new_balance
+
+async def get_user_balances(user_id: int) -> list[dict]:
+    """Return the balance of all accounts"""
+    async with db.pool.acquire() as conn:
+        records = await conn.fetch(queries.GET_ALL_BALANCES, user_id)
+        return [dict(r) for r in records]
+
+
+async def get_user_stats(user_id: int, t_type: str = "expense") -> list[dict]:
+    """Return the statistics of one month"""
+    async with db.pool.acquire() as conn:
+        records = await conn.fetch(queries.GET_MONTHLY_STATS, user_id, t_type)
+        return [dict(r) for r in records]
