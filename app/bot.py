@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart, Command
 from app.core.config import settings
 from app.core.database import db
 from app.core.ai_client import parse_transaction_text
-from app.services.finance import process_transaction, get_user_stats, get_user_balances
+from app.services.finance import process_transaction, get_user_stats, get_user_balances, create_account
 
 
 bot = Bot(token=settings.BOT_TOKEN)
@@ -21,6 +21,24 @@ async def cmd_start(message: types.Message):
         parse_mode="HTML"
     )
 
+@dp.message(Command("new_account"))
+async def cmd_new_account(message: types.Message):
+    args = message.text.split(maxsplit=1)
+
+    if len(args) < 2:
+        await message.answer(
+            "Please write the name of the account.\n"
+            "Example: <code>/new_account Kaspi</code>",
+            parse_mode="HTML"
+        )
+        return
+
+    account_name = args[1].strip()
+    user_id = message.from_user.id
+    username = message.from_user.username or 'unknown'
+
+    result_msg = await create_account(user_id, username, account_name)
+    await message.answer(result_msg, parse_mode="HTML")
 
 @dp.message(Command("balance"))
 async def cmd_balance(message: types.Message):
@@ -31,7 +49,7 @@ async def cmd_balance(message: types.Message):
         await message.answer("You do not have any accounts yet. Make a transaction to add an account.")
         return
 
-    reply = "<b>💳 Ваши счета:</b>\n\n"
+    reply = "<b>Your accounts:</b>\n\n"
     total_sum = 0
 
     for b in balances:
@@ -51,7 +69,7 @@ async def cmd_stats(message: types.Message):
         await message.answer("You do not have any expenses yet.")
         return
 
-    reply = "<b>📉 Expenses for this month:</b>\n\n"
+    reply = "<b>Expenses for this month:</b>\n\n"
     total_expense = 0
 
     for s in stats:
@@ -87,15 +105,15 @@ async def process_user_text(message: types.Message):
             description=ai_result.get("description", text)
         )
 
-        emoji = "📉 Expense" if ai_result["t_type"] == "expense" else "📈 Income"
+        emoji = "📉Expense" if ai_result["t_type"] == "expense" else "📈Income"
 
         reply_text = (
             f"{emoji} Recorded!\n"
-            f"💳 Account: <b>{ai_result['account_name']}</b>\n"
-            f"💰 Amount: <b>{ai_result['amount']}</b>\n"
-            f"🏷 Category: <b>{ai_result['category']}</b>\n"
+            f"Account: <b>{ai_result['account_name']}</b>\n"
+            f"Amount: <b>{ai_result['amount']}</b>\n"
+            f"Category: <b>{ai_result['category']}</b>\n"
             f"──────────────\n"
-            f"🏦 Remaining: <b>{new_balance}</b>"
+            f"Remaining: <b>{new_balance}</b>"
         )
         await message.answer(reply_text, parse_mode="HTML")
 

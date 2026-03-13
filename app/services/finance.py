@@ -22,7 +22,10 @@ async def process_transaction(
             account = await conn.fetchrow(queries.GET_ACCOUNT, user_id, account_name)
 
             if not account:
-                account = await conn.fetchrow(queries.CREATE_ACCOUNT, user_id, account_name, 'KZT')
+                raise ValueError(
+                    f"Account <b>'{account_name}'</b> is not found.\n"
+                    f"Create an account using:\n<code>/new_account {account_name}</code>"
+                )
 
             account_id = account['id']
 
@@ -45,6 +48,23 @@ async def process_transaction(
             )
 
             return new_balance
+
+async def create_account(user_id: int, username: str, account_name: str, currency: str = 'KZT'):
+    """Creates an account for the user"""
+    async with db.pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute(queries.ENSURE_USER, user_id, username, username)
+
+            existing = await conn.fetch(
+                "SELECT id FROM accounts WHERE user_id = $1 AND ILIKE(name) = ILIKE($2)",
+                user_id, account_name
+            )
+
+            if existing:
+                return f"Account <b>{account_name}</b> already exists!"
+
+            await conn.execute(queries.CREATE_ACCOUNT, user_id, account_name, currency)
+            return f"Account <b>{account_name}</b> successfully created."
 
 async def get_user_balances(user_id: int) -> list[dict]:
     """Return the balance of all accounts"""
